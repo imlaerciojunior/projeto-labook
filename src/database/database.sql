@@ -1,3 +1,4 @@
+-- Active: 1699404862099@@127.0.0.1@3306
 CREATE TABLE
     users (
         id TEXT PRIMARY KEY UNIQUE NOT NULL,
@@ -12,8 +13,8 @@ CREATE TABLE
 DROP TABLE users;
 
 INSERT INTO users (id, name, email, password, role)
-VALUES ('u001','Carol','carol@email.com','carol123','NORMAL'), 
-       ('u002','Breno','breno@email.com','breno123','NORMAL');
+VALUES ('u001','Junior','junior@email.com','junior123','NORMAL'), 
+       ('u002','Bruno','bruno@email.com','bruno123','NORMAL');
 
 CREATE Table
     posts(
@@ -29,8 +30,8 @@ CREATE Table
 DROP TABLE posts;
 
 INSERT INTO posts(id, creator_id, content, likes, dislikes_numbers)
-VALUES ('p001', 'u001', 'oiii', 5, 1), 
-       ('p002', 'u002', 'oi oi tudo bem', 4, 2 );
+VALUES ('p001', 'u001', 'Ola, tudo bem?', 7, 2), 
+       ('p002', 'u002', 'Oi, tudo bem. E você?', 9, 1 );
 
 SELECT * FROM users;
 
