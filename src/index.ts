@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
-import { UserController } from './controller/UserController'
+import { userRouter } from './router/useRouter'
+import { postRouter } from './router/postRouter'
 
 const app = express()
 
@@ -29,12 +30,6 @@ app.get("/ping", async (req: Request, res: Response) => {
     }
   });
   
-  const userController = new UserController();
-  
-  app.get("/users", userController.getUsers);
-  
-  app.post("/users", userController.createUsers);
-  
-  app.put("/users/:id", userController.updateUsers);
-  
-  app.delete("/users/:id", userController.deleteUsers);
+app.use("/users", userRouter)
+
+app.use("/posts", postRouter)
