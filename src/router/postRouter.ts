@@ -1,14 +1,15 @@
 import express from "express"
 import { PostController } from "../controller/PostController"
+import { PostBusiness } from "../business/PostBusiness"
+import { PostDatabase } from "../database/PostDatabase"
 
 export const postRouter = express.Router()
 
-const postController = new PostController()
+const postsController = new PostController(
+    new PostBusiness(new PostDatabase)
+)
 
-postRouter.get("/", postController.getPosts);
-  
-postRouter.post("/", postController.createPosts);
-  
-postRouter.put("/:id", postController.updatePost);
-  
-postRouter.delete("/:id", postController.deletePost);
+postRouter.get("/",postsController.getPosts)
+postRouter.post("/",postsController.createPosts)
+postRouter.put("/:id",postsController.updatePosts)
+postRouter.delete("/:id",postsController.deletePosts)
