@@ -6,8 +6,8 @@ import { PostDatabase } from "../database/PostDatabase"
 export const postRouter = express.Router()
 
 const postsController = new PostController(
-    new PostBusiness(new PostDatabase)
-)
+    new PostBusiness(new PostDatabase()
+));
 
 postRouter.get("/",postsController.getPosts)
 postRouter.post("/",postsController.createPosts)

@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 import { CreatePostSchema } from "../dtos/PostDTO/createPost.dto";
 import { EditPostSchema } from "../dtos/PostDTO/editPosts.dto";
 import { DeletePostSchema } from "../dtos/PostDTO/deletePost.dto";
+import { GetPostsInputDTO, GetPostsSchema } from "../dtos/PostDTO/getPost.dto";
 
 export class PostController {
 
@@ -14,9 +15,9 @@ export class PostController {
 
   public getPosts = async (req: Request, res: Response) => {
     try {
-      const input = {
-        q: req.query.q as string | undefined,
-      };
+      const input: GetPostsInputDTO = GetPostsSchema.parse({
+        nameToSearch: req.query.name as string | undefined,
+      });
 
       // const postBusiness = new PostBusiness();
       const response = await this.postBusiness.getPosts(input);
@@ -39,17 +40,16 @@ export class PostController {
 
   public createPosts = async (req: Request, res: Response) => {
     try {
-      
       const input = CreatePostSchema.parse({
         id: req.body.id,
-        creatorId: req.body.creatorId,
+        creatorId: req.body.creator_id,
         content: req.body.content,
         likes: req.body.likes,
-        dislikesNumbers: req.body.dislikesNumbers,
-            })
+        dislikes: req.body.dislikes,
+      });
 
 
-      const output = await this.postBusiness.createPosts(input);
+      const output = await this.postBusiness.createPost(input);
 
       res.status(201).send({output});
 
