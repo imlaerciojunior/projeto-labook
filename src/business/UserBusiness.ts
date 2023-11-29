@@ -1,37 +1,152 @@
 import { UserDatabase } from "../database/UserDatabase";
-import {
-  CreateUserInputDTO,
-  CreateUserOutputDTO,
-} from "../dtos/UserDTO/createUser.dto";
-import { DeleteUserInputDTO, DeleteUserOutputDTO } from "../dtos/UserDTO/deleteUser.dto";
-import { EditUserInputDTO, EditUserOutputDTO } from "../dtos/UserDTO/editUser.dto";
+import { CreateUserInputDTO, CreateUserOutputDTO,} from "../dtos/UserDTO/createUser.dto";
+import { DeleteUserInputDTO, DeleteUserOutputDTO,} from "../dtos/UserDTO/deleteUser.dto";
+import { EditUserInputDTO, EditUserOutputDTO,} from "../dtos/UserDTO/editUser.dto";
+import { GetUsersInputDTO, GetUsersOutputDTO,} from "../dtos/UserDTO/getUsers.dto";
+import { LoginInputDTO, LoginOutputDTO } from "../dtos/UserDTO/login.dto";
+import { SignupInputDTO, SignupOutputDTO } from "../dtos/UserDTO/signup.dto";
 import { BadRequestError } from "../errors/BadRequestError";
 import { NotFoundError } from "../errors/NotFoundError";
-import { User } from "../models/Users";
+import { USER_ROLES, User } from "../models/Users";
+import { HashManager } from "../services/HashManager";
+import { IdGenerator } from "../services/IdGenerator";
+import { TokenManager, TokenPayload } from "../services/TokenManager";
 import { UserDB } from "../types";
 
 export class UserBusiness {
-  constructor(private userDatabase: UserDatabase) {}
+  constructor(
+    private userDatabase: UserDatabase,
+    private idGenerator: IdGenerator,
+    private tokenManager: TokenManager,
+    private hashManager: HashManager
+  ) {}
 
-  public getUsers = async (input: any) => {
-    const { q } = input;
-    const usersDB = await this.userDatabase.findUsers(q);
+  public getUsers = async (
+    input: GetUsersInputDTO
+  ): Promise<GetUsersOutputDTO> => {
+    const { nameToSearch, token } = input;
 
-    const users: User[] = usersDB.map(
-      (usersDB) =>
-        new User(
-          usersDB.id,
-          usersDB.name,
-          usersDB.email,
-          usersDB.password,
-          usersDB.role,
-          usersDB.created_at
-        )
-    );
-    return users;
+    const payload = this.tokenManager.getPayload(token);
+
+    if (payload === null) {
+      throw new BadRequestError("token inválido");
+    }
+
+    if (payload.role !== USER_ROLES.ADMIN) {
+      throw new BadRequestError("Somente admins podem acessar esse recurso");
+    }
+
+    const usersDB = await this.userDatabase.findUsers(nameToSearch);
+
+    const users = usersDB.map((userDB) => {
+      const user = new User(
+        userDB.id,
+        userDB.name,
+        userDB.email,
+        userDB.password,
+        userDB.role as USER_ROLES,
+        userDB.created_at
+      );
+
+      return user.toBusinessModel();
+    });
+
+    const response: GetUsersOutputDTO = users;
+
+    return response;
   };
 
-  public createUsers = async (input: CreateUserInputDTO): Promise<CreateUserOutputDTO> => {
+  public signup = async (input: SignupInputDTO): Promise<SignupOutputDTO> => {
+    const { name, email, password } = input;
+
+    const id = this.idGenerator.generate();
+
+    const userDBExists = await this.userDatabase.findUserById(id);
+
+    if (userDBExists) {
+      throw new BadRequestError("'id' já existente");
+    }
+
+    const hashedPassword = await this.hashManager.hash(password);
+
+    const newUser = new User(
+      id,
+      name,
+      email,
+      hashedPassword,
+      USER_ROLES.NORMAL,
+      new Date().toISOString()
+    );
+
+    const newUserDB = newUser.toDBModel();
+    await this.userDatabase.insertUser(newUserDB);
+
+    const payload: TokenPayload = {
+      id: newUser.getId(),
+      name: newUser.getName(),
+      role: newUser.getRole(),
+    };
+
+    const token = this.tokenManager.createToken(payload);
+
+    const response: SignupOutputDTO = {
+      message: "Cadastro realizado com sucesso",
+      token,
+    };
+
+    return response;
+  };
+
+  public login = async (input: LoginInputDTO): Promise<LoginOutputDTO> => {
+    const { email, password } = input;
+
+    const userDB = await this.userDatabase.findUserByEmail(email);
+
+    if (!userDB) {
+      throw new NotFoundError("'email' não encontrado");
+    }
+    // o password hasheado está no banco de dados
+    const hashedPassword = userDB.password;
+
+    // o serviço hashManager analisa o password do body (plaintext) e o hash
+    const isPasswordCorrect = await this.hashManager.compare(
+      password,
+      hashedPassword
+    );
+
+    // validamos o resultado
+    if (!isPasswordCorrect) {
+      throw new BadRequestError("'email' ou 'password' incorretos");
+    }
+
+    const user = new User(
+      userDB.id,
+      userDB.name,
+      userDB.email,
+      userDB.password,
+      userDB.role as USER_ROLES,
+      new Date().toISOString()
+    );
+
+    const payload: TokenPayload = {
+      id: user.getId(),
+      name: user.getName(),
+      role: user.getRole(),
+    };
+
+    const token = this.tokenManager.createToken(payload);
+
+    const response: LoginOutputDTO = {
+      message: "Login realizado com sucesso",
+      token,
+    };
+
+    return response;
+  };
+
+  public createUsers = async (
+    input: CreateUserInputDTO
+   ): Promise<CreateUserOutputDTO> => {
     const { id, name, email, password, role } = input;
 
     const userDBExists = await this.userDatabase.findUserById(id);
@@ -45,7 +160,7 @@ export class UserBusiness {
       name,
       email,
       password,
-      role,
+      role as USER_ROLES,
       new Date().toISOString()
     );
 
@@ -73,7 +188,9 @@ export class UserBusiness {
     return output;
   };
 
-  public updateUsers = async (input: EditUserInputDTO): Promise<EditUserOutputDTO> => {
+  public updateUsers = async (
+    input: EditUserInputDTO
+   ): Promise<EditUserOutputDTO> => {
     const { idToEdit, id, name, email, password, role } = input;
 
     const userDBExists = await this.userDatabase.findUserById(idToEdit);
@@ -87,7 +204,7 @@ export class UserBusiness {
       userDBExists.name,
       userDBExists.email,
       userDBExists.password,
-      userDBExists.role,
+      userDBExists.role as USER_ROLES,
       userDBExists.created_at
     );
 
@@ -95,7 +212,7 @@ export class UserBusiness {
     name && user.setName(name);
     email && user.setEmail(email);
     password && user.setPassword(password);
-    role && user.setRole(role);
+    role && user.setRole(role as USER_ROLES);
 
     const updatedUser: UserDB = {
       id: user.getId(),
@@ -122,7 +239,9 @@ export class UserBusiness {
     return output;
   };
 
-  public deleteUsers = async (input: DeleteUserInputDTO ): Promise<DeleteUserOutputDTO> => {
+  public deleteUsers = async (
+    input: DeleteUserInputDTO
+   ): Promise<DeleteUserOutputDTO> => {
     const { idToDelete } = input;
 
     const userDBExists = await this.userDatabase.findUserById(idToDelete);
