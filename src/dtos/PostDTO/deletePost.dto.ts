@@ -1,17 +1,13 @@
-import z from 'zod'
+import { z } from "zod";
 
 export interface DeletePostInputDTO {
-    idToDelete: string,
-    id: string
+  token: string;
+  idToDelete: string;
 }
 
-export interface DeletePostOutputDTO {
-    message: string,
-    post:{
-        id:string
-    }
-}
+export type DeletePostOutputDTO = undefined;
 
 export const DeletePostSchema = z.object({
-    idToDelete: z.string().min(3)
-}).transform(data => data as DeletePostInputDTO)
+  token: z.string().min(2),
+  idToDelete: z.string().min(1),
+});

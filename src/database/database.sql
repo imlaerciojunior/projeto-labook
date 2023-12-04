@@ -21,25 +21,47 @@ CREATE TABLE
         id TEXT PRIMARY KEY UNIQUE NOT NULL,
         creator_id TEXT NOT NULL,
         content TEXT UNIQUE NOT NULL,
-        likes REAL NOT NULL,
-        dislikes_numbers REAL NOT NULL,
+        likes INTEGER DEFAULT (0) NOT NULL,
+        dislikes INTEGER DEFAULT (0) NOT NULL,
         created_at DATETIME DEFAULT (strftime('%Y-%m-%d %H:%M:%S','now','localtime')),
-        updated_at DATETIME DEFAULT (strftime('%Y-%m-%d %H:%M:%S','now','localtime'))
+        updated_at DATETIME DEFAULT (strftime('%Y-%m-%d %H:%M:%S','now','localtime')),
+        FOREIGN KEY (creator_id) REFERENCES users (id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
     );
 
 DROP TABLE posts;
 
-INSERT INTO posts(id, creator_id, content, likes, dislikes_numbers)
-VALUES ('p001', 'u001', 'Ola, tudo bem?', 7, 2), 
-       ('p002', 'u002', 'Oi, tudo bem. E você?', 9, 1 );
+INSERT INTO posts(id, creator_id, content)
+VALUES ('p001', 'u001', 'Ola, tudo bem?'), 
+       ('p002', 'u002', 'Oi, tudo bem. E você?');
 
 
-CREATE TABLE 
-    likes_dislikes(
-        user_id TEXT NOT NULL,
-        post_id TEXT NOT NULL,
-        like INTEGER NOT NULL
-    )
+CREATE TABLE likes_dislikes (
+  user_id TEXT NOT NULL,
+  post_id TEXT NOT NULL,
+  like INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE,
+  FOREIGN KEY (post_id) REFERENCES posts (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
+
+INSERT INTO likes_dislikes
+VALUES
+('u001','p001', 1),
+('u002','p002', 1);
+
+
+UPDATE posts
+SET likes = 2
+WHERE id = 'p001';
+
+UPDATE posts
+SET likes = 1, dislikes = 1
+WHERE id = 'p002';
 
 
 SELECT * FROM users;
