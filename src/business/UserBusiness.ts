@@ -1,4 +1,3 @@
-import { TokenManager, TokenPayload } from "../services/TokenManager";
 import { USER_ROLES, User } from "../models/Users";
 import { BadRequestError } from "../errors/BadRequestError";
 import { NotFoundError } from "../errors/NotFoundError";
@@ -8,6 +7,7 @@ import { HashManager } from "../services/HashManager";
 import { SignupInputDTO, SignupOutputDTO } from "../dtos/UserDTO/signup.dto";
 import { LoginInputDTO, LoginOutputDTO } from "../dtos/UserDTO/login.dto";
 import { GetUsersInputDTO, GetUsersOutputDTO } from "../dtos/UserDTO/getUsers.dto";
+import { TokenManager, TokenPayload } from "../services/TokenManager";
 
 export class UserBusiness {
   constructor(
