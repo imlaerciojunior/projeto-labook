@@ -19,7 +19,6 @@ export interface UserModel {
   role: USER_ROLES;
   createdAt: string;
 }
-
 export class User {
   constructor(
     private id: string,
@@ -34,32 +33,32 @@ export class User {
     return this.id;
   }
 
-  public setId(newValue: string): void {
-    this.id = newValue;
+  public setId(value: string): void {
+    this.id = value;
   }
 
   public getName(): string {
     return this.name;
   }
 
-  public setName(newValue: string): void {
-    this.name = newValue;
+  public setName(value: string): void {
+    this.name = value;
   }
 
   public getEmail(): string {
     return this.email;
   }
 
-  public setEmail(newValue: string): void {
-    this.email = newValue;
+  public setEmail(value: string): void {
+    this.email = value;
   }
 
   public getPassword(): string {
     return this.password;
   }
 
-  public setPassword(newValue: string): void {
-    this.password = newValue;
+  public setPassword(value: string): void {
+    this.password = value;
   }
 
   public getRole(): USER_ROLES {
@@ -74,8 +73,8 @@ export class User {
     return this.createdAt;
   }
 
-  public setCreatedAt(newValue: string): void {
-    this.createdAt = newValue;
+  public setCreatedAt(value: string): void {
+    this.createdAt = value;
   }
 
   public toDBModel(): UserDB {
